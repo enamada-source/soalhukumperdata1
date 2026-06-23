@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Tryout Online CAT - Hukum Perdata (KUHPerdata)</title>
+    <!-- Tailwind CSS untuk Desain Modern & Responsive -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- FontAwesome untuk Ikon Modern -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Mammoth.js untuk membaca file .docx tambahan secara offline -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <style>
+        .sticky-timer {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        body {
+            user-select: none;
+            -webkit-user-select: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased">
+
+    <!-- ==================== 1. HALAMAN PEMBUKA / DASHBOARD ==================== -->
+    <div id="landing-page" class="min-h-screen flex flex-col items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-2xl shadow-xl max-w-2xl w-full border border-slate-100 text-center">
+            <div class="w-20 h-20 bg-blue-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-6 text-3xl shadow-lg shadow-blue-200">
+                <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+            <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight mb-2">TRYOUT ONLINE</h1>
+            <p class="text-slate-500 mb-6">Sistem Computer Assisted Test (CAT) - Bank Soal Hukum Perdata (Burgerlijk Wetboek)</p>
+            
+            <!-- Informasi Berkas Terintegrasi -->
+            <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100 text-left mb-6 flex items-start gap-3">
+                <div class="text-emerald-600 text-xl mt-0.5"><i class="fa-solid fa-circle-check"></i></div>
+                <div>
+                    <h4 class="font-bold text-emerald-900 text-sm">Dokumen Berhasil Dimuat Terintegrasi</h4>
+                    <p class="text-xs text-emerald-700 mt-0.5">
+                        Sebanyak 67 butir soal materi Hukum Perdata dari berkas Anda telah dimasukkan langsung ke dalam sistem. Anda juga masih dapat memperbarui bank soal dengan mengunggah berkas baru di bawah jika diperlukan.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Fitur Tambahan Import Berkas Baru -->
+            <div class="bg-blue-50/50 p-4 rounded-xl border border-blue-100 text-left mb-6">
+                <label class="block text-xs font-bold text-blue-900 uppercase tracking-wider mb-2"><i class="fa-solid fa-file-import"></i> Perbarui Berkas Soal Baru (Opsional) :</label>
+                <input type="file" id="file-input" accept=".docx,.txt" class="block w-full text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer" />
+                <div id="file-status" class="text-xs mt-1 text-slate-500">Menggunakan 67 Soal Bawaan Dokumen Utama.</div>
+            </div>
+
+            <!-- Informasi Ujian -->
+            <div class="grid grid-cols-3 gap-4 mb-6">
+                <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                    <div class="text-xs text-slate-400 font-medium mb-1">JUMLAH SOAL</div>
+                    <div id="info-total-soal" class="text-xl font-bold text-slate-700">67 Soal</div>
+                </div>
+                <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                    <div class="text-xs text-slate-400 font-medium mb-1">DURASI</div>
+                    <div class="text-xl font-bold text-slate-700">90 Menit</div>
+                </div>
+                <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                    <div class="text-xs text-slate-400 font-medium mb-1">PENILAIAN</div>
+                    <div class="text-xl font-bold text-slate-700">Otomatis</div>
+                </div>
+            </div>
+
+            <!-- Nama Peserta -->
+            <div class="mb-6 text-left">
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Nama Peserta :</label>
+                <input type="text" id="username" value="Peserta Tryout" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+            </div>
+
+            <button id="btn-start" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-200 transition-all duration-200 cursor-pointer text-lg">
+                Mulai Ujian <i class="fa-solid fa-arrow-right ml-2"></i>
+            </button>
+        </div>
+    </div>
+
+
+    <!-- ==================== 2. HALAMAN UTAMA UJIAN (CAT INTERFACE) ==================== -->
+    <div id="exam-page" class="hidden min-h-screen flex flex-col">
+        <!-- Sticky Header (Timer & Info) -->
+        <header class="sticky-timer bg-white border-b border-slate-200 shadow-sm px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <span class="bg-blue-600 text-white px-3 py-1.5 rounded-lg font-bold text-sm tracking-wider">CAT SYSTEM</span>
+                <h2 class="font-bold text-slate-800" id="exam-user-display">Peserta: -</h2>
+            </div>
+            
+            <!-- Timer Display -->
+            <div id="timer-container" class="flex items-center gap-3 bg-slate-100 px-5 py-2.5 rounded-xl border border-slate-200 transition-all">
+                <i class="fa-regular fa-clock text-xl text-slate-500" id="timer-icon"></i>
+                <span id="timer" class="font-mono text-2xl font-bold text-slate-700">90:00</span>
+            </div>
+
+            <button onclick="confirmEndExam()" class="bg-red-600 hover:bg-red-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-sm transition flex items-center gap-2">
+                <i class="fa-solid fa-stop-circle"></i> Selesai Ujian
+            </button>
+        </header>
+
+        <!-- Main Workspace -->
+        <div class="flex-1 flex flex-col md:flex-row">
+            <!-- Sisi Kiri: Konten Soal -->
+            <main class="flex-1 p-6 md:p-8 flex flex-col justify-between">
+                <div class="max-w-3xl w-full mx-auto">
+                    <!-- Kotak Soal -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 mb-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <span class="text-sm font-semibold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                                SOAL NOMOR <span id="current-question-num">1</span>
+                            </span>
+                        </div>
+                        
+                        <!-- Teks Soal -->
+                        <p id="question-text" class="text-lg text-slate-800 font-medium leading-relaxed mb-8">
+                            Memuat butir soal...
+                        </p>
+
+                        <!-- Pilihan Jawaban (A, B, C, D) -->
+                        <div class="space-y-3" id="options-container"></div>
+                    </div>
+                </div>
+
+                <!-- Navigasi Bawah Soal -->
+                <div class="max-w-3xl w-full mx-auto flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 pt-6">
+                    <div class="flex gap-3">
+                        <button onclick="prevQuestion()" id="btn-prev" class="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition flex items-center gap-2">
+                            <i class="fa-solid fa-chevron-left"></i> Sebelumnya
+                        </button>
+                        <button onclick="toggleDoubtful()" id="btn-doubt" class="px-5 py-2.5 bg-amber-50 border border-amber-300 text-amber-700 font-semibold rounded-xl hover:bg-amber-100 transition flex items-center gap-2">
+                            <i class="fa-regular fa-flag"></i> Ragu-Ragu
+                        </button>
+                    </div>
+                    <button onclick="nextQuestion()" id="btn-next" class="px-6 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-md shadow-blue-100 transition flex items-center gap-2">
+                        Selanjutnya <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+            </main>
+
+            <!-- Sisi Kanan: Sidebar Navigasi Nomor Soal & Editor Khusus -->
+            <aside class="w-full md:w-80 bg-white border-t md:border-t-0 md:border-l border-slate-200 p-6 flex flex-col justify-between gap-6 overflow-y-auto">
+                <div>
+                    <h3 class="font-bold text-slate-990 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-th"></i> Navigasi Soal
+                    </h3>
+                    
+                    <!-- Grid Nomor Soal -->
+                    <div id="nav-grid" class="grid grid-cols-5 gap-2 max-h-[250px] overflow-y-auto p-1"></div>
+
+                    <!-- Petunjuk Warna -->
+                    <div class="mt-4 pt-4 border-t border-slate-100 space-y-1.5 text-xs font-medium text-slate-500">
+                        <div class="flex items-center gap-2">
+                            <span class="w-4 h-4 rounded bg-slate-100 border border-slate-300 block"></span> Belum dijawab
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-4 h-4 rounded bg-blue-600 block"></span> Sudah dijawab
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-4 h-4 rounded bg-amber-400 block"></span> Ragu-ragu
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANEL TAMBAHAN: LIVE EDITOR SOAL & JAWABAN -->
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                        <i class="fa-solid fa-user-gear text-blue-600"></i> Panel Editor Soal <span id="editor-num-info" class="text-blue-600">(#1)</span>
+                    </h4>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Isi Pertanyaan:</label>
+                            <textarea id="edit-question-text" rows="3" class="w-full p-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 bg-white outline-none" oninput="updateLiveQuestionData()"></textarea>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <label class="block text-[11px] font-bold text-slate-500 uppercase">Pilihan Jawaban & Kunci:</label>
+                            
+                            <div class="flex gap-2 items-center">
+                                <input type="radio" name="edit-correct-key" value="A" onchange="updateLiveQuestionData()" class="w-3.5 h-3.5 text-blue-600">
+                                <span class="text-xs font-bold text-slate-500">A:</span>
+                                <input type="text" id="edit-opt-A" oninput="updateLiveQuestionData()" class="w-full p-1.5 border border-slate-300 rounded-md text-xs bg-white outline-none">
+                            </div>
+
+                            <div class="flex gap-2 items-center">
+                                <input type="radio" name="edit-correct-key" value="B" onchange="updateLiveQuestionData()" class="w-3.5 h-3.5 text-blue-600">
+                                <span class="text-xs font-bold text-slate-500">B:</span>
+                                <input type="text" id="edit-opt-B" oninput="updateLiveQuestionData()" class="w-full p-1.5 border border-slate-300 rounded-md text-xs bg-white outline-none">
+                            </div>
+
+                            <div class="flex gap-2 items-center">
+                                <input type="radio" name="edit-correct-key" value="C" onchange="updateLiveQuestionData()" class="w-3.5 h-3.5 text-blue-600">
+                                <span class="text-xs font-bold text-slate-500">C:</span>
+                                <input type="text" id="edit-opt-C" oninput="updateLiveQuestionData()" class="w-full p-1.5 border border-slate-300 rounded-md text-xs bg-white outline-none">
+                            </div>
+
+                            <div class="flex gap-2 items-center">
+                                <input type="radio" name="edit-correct-key" value="D" onchange="updateLiveQuestionData()" class="w-3.5 h-3.5 text-blue-600">
+                                <span class="text-xs font-bold text-slate-500">D:</span>
+                                <input type="text" id="edit-opt-D" oninput="updateLiveQuestionData()" class="w-full p-1.5 border border-slate-300 rounded-md text-xs bg-white outline-none">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+
+    <!-- ==================== 3. HALAMAN HASIL & PEMBAHASAN ==================== -->
+    <div id="result-page" class="hidden min-h-screen bg-slate-50 p-6 md:p-12">
+        <div class="max-w-4xl w-full mx-auto bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden" id="printable-area">
+            
+            <div class="bg-gradient-to-r from-blue-700 to-indigo-800 p-8 text-white text-center">
+                <div class="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                    <i class="fa-solid fa-square-poll-vertical"></i>
+                </div>
+                <h2 class="text-2xl font-bold mb-1">HASIL UJIAN RESMI</h2>
+                <p class="text-blue-100 text-sm">Laporan Evaluasi Tryout Online Computer Assisted Test</p>
+            </div>
+
+            <div class="p-6 md:p-8 border-b border-slate-100 grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Informasi Peserta</h3>
+                    <table class="w-full text-sm">
+                        <tr class="border-b border-slate-100"><td class="py-2 text-slate-500 w-36">Nama</td><td class="py-2 font-bold text-slate-800" id="res-nama">-</td></tr>
+                        <tr class="border-b border-slate-100"><td class="py-2 text-slate-500">Tanggal Ujian</td><td class="py-2 font-medium text-slate-800" id="res-tanggal">-</td></tr>
+                        <tr><td class="py-2 text-slate-500">Durasi Pengerjaan</td><td class="py-2 font-medium text-slate-800" id="res-durasi">-</td></tr>
+                    </table>
+                </div>
+                <div class="flex flex-col items-center justify-center bg-slate-50 rounded-2xl p-6 border border-slate-200">
+                    <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">NILAI AKHIR</div>
+                    <div class="text-5xl font-extrabold text-blue-600" id="res-nilai">00.0</div>
+                </div>
+            </div>
+
+            <div class="p-6 md:p-8 bg-slate-50/50 border-b border-slate-100 grid grid-cols-3 gap-4 text-center">
+                <div class="p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
+                    <div class="text-green-600 text-xl mb-1"><i class="fa-solid fa-circle-check"></i></div>
+                    <div class="text-2xl font-bold text-slate-800" id="res-benar">0</div>
+                    <div class="text-xs font-medium text-slate-400">Jawaban Benar</div>
+                </div>
+                <div class="p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
+                    <div class="text-red-500 text-xl mb-1"><i class="fa-solid fa-circle-xmark"></i></div>
+                    <div class="text-2xl font-bold text-slate-800" id="res-salah">0</div>
+                    <div class="text-xs font-medium text-slate-400">Jawaban Salah</div>
+                </div>
+                <div class="p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
+                    <div class="text-slate-400 text-xl mb-1"><i class="fa-solid fa-circle-minus"></i></div>
+                    <div class="text-2xl font-bold text-slate-800" id="res-kosong">0</div>
+                    <div class="text-xs font-medium text-slate-400">Tidak Dijawab</div>
+                </div>
+            </div>
+
+            <div class="p-6 bg-white border-b border-slate-100 flex flex-wrap gap-3 justify-center no-print">
+                <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white font-bold px-5 py-2.5 rounded-xl transition flex items-center gap-2 shadow-sm text-sm">
+                    <i class="fa-solid fa-print"></i> Cetak / Simpan PDF
+                </button>
+                <button onclick="downloadJsonReport()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl transition flex items-center gap-2 shadow-sm text-sm">
+                    <i class="fa-solid fa-download"></i> Unduh Rekap Data (JSON)
+                </button>
+                <button onclick="restartApp()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-5 py-2.5 rounded-xl transition flex items-center gap-2 text-sm">
+                    <i class="fa-solid fa-rotate-left"></i> Mulai Ulang Aplikasi
+                </button>
+            </div>
+
+            <div class="p-6 md:p-8">
+                <h3 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+                    <i class="fa-solid fa-book-open text-blue-600"></i> Analisis & Review Pembahasan
+                </h3>
+                <div id="review-container" class="space-y-6"></div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // =========================================================================
+        // DATA BASE BANK SOAL TERINTEGRASI (67 BUTIR SOAL HUKUM PERDATA / BW)
+        // =========================================================================
+        let questions = [
+            {
+                text: "Berdasarkan sistematika hukum perdata dalam KUHPerdata (BW), manakah pembagian yang tepat untuk Buku I sampai dengan Buku IV?",
+                options: {
+                    A: "Buku I: Tentang Kebendaan, Buku II: Tentang Orang, Buku III: Tentang Pembuktian, Buku IV: Tentang Perikatan",
+                    B: "Buku I: Tentang Perikatan, Buku II: Tentang Orang, Buku III: Tentang Kebendaan, Buku IV: Tentang Pembuktian",
+                    C: "Buku I: Tentang Orang, Buku II: Tentang Perikatan, Buku III: Tentang Kebendaan, Buku IV: Tentang Pembuktian & Lewat Waktu",
+                    D: "Buku I: Tentang Orang, Buku II: Tentang Kebendaan, Buku III: Tentang Perikatan, Buku IV: Tentang Pembuktian & Lewat Waktu"
+                },
+                correctAnswer: "D"
+            },
+            {
+                text: "Dalam studi ilmu hukum, hukum perdata memiliki sistematika tertentu yang membagi bidang-bidang bahasannya secara terstruktur. Manakah di bawah ini yang merupakan sistematika hukum perdata menurut Ilmu Pengetahuan?",
+                options: {
+                    A: "Hukum Perorangan, Hukum Perkawinan, Hukum Tanah, Hukum Waris",
+                    B: "Hukum Pribadi, Hukum Perjanjian, Hukum Dagang, Hukum Waris",
+                    C: "Hukum Tentang Orang, Hukum Keluarga, Hukum Harta Kekayaan, Hukum Waris",
+                    D: "Hukum Orang, Hukum Kebendaan, Hukum Perikatan, Hukum Pembuktian"
+                },
+                correctAnswer: "C"
+            },
+            {
+                text: "Mengatur empat syarat sahnya perjanjian, yaitu kesepakatan, kecakapan, objek tertentu, dan sebab yang halal. Jika syarat subjektif (1&2) tidak dipenuhi, perjanjian dapat dibatalkan, sementara jika syarat objektif (3&4) tidak dipenuhi, perjanjian batal demi hukum. (Soal Tambahan: SECATERHALAL)",
+                options: {
+                    A: "1365 KUHPerdata",
+                    B: "1338 KUHPerdata",
+                    C: "27 KUHPerdata",
+                    D: "1320 KUHPerdata"
+                },
+                correctAnswer: "D"
+            },
+            {
+                text: "Menurut ketentuan hukum perdata, anak yang ada dalam kandungan seorang perempuan dianggap telah lahir setiap kali kepentingan si anak menghendakinya. Namun, jika ia mati sewaktu dilahirkan, ia dianggap tidak pernah ada. Ketentuan ini diatur dalam pasal berapa dan dikenal dengan asas apa?",
+                options: {
+                    A: "Pasal 1 KUHPerdata- Asas Legalitas",
+                    B: "Pasal 2 KUHPerdata- Asas Fictie Hukum",
+                    C: "Pasal 3 KUHPerdata- Asas Kebebasan Berkontrak",
+                    D: "Pasal 830 KUHPerdata- Asas Pewarisan"
+                },
+                correctAnswer: "B"
+            },
+            {
+                text: "Dasar hukum dalam Kitab Undang-Undang Hukum Perdata (BW) yang mengatur bahwa para calon suami istri dengan perjanjian kawin dapat menyimpang dari peraturan undang-undang mengenai persatuan harta kekayaan adalah...",
+                options: {
+                    A: "Pasal 153 KUHPerdata",
+                    B: "Pasal 119 KUHPerdata",
+                    C: "Pasal 139 KUHPerdata",
+                    D: "Pasal 140 KUHPerdata"
+                },
+                correctAnswer: "C"
+            },
+            {
+                text: "Berdasarkan ketentuan hukum perdata, manakah pasal yang mengatur mengenai pihak-pihak yang dinyatakan tidak cakap untuk membuat suatu perjanjian, yang meliputi: 1. anak belum dewasa, 2. orang di bawah pengampuan, dan 3. pihak yang dilarang oleh undang-undang",
+                options: {
+                    A: "Pasal 1331 KUHPerdata",
+                    B: "Pasal 1338 KUHPerdata",
+                    C: "Pasal 1320 KUHPerdata",
+                    D: "Pasal 1330 KUHPerdata"
+                },
+                correctAnswer: "D"
+            },
+            {
+                text: "Apabila suatu perjanjian melanggar ketentuan Pasal 1330 KUHPerdata mengenai kecakapan para pihak, maka perjanjian tersebut dapat dibatalkan (voidable) oleh pihak yang tidak cakap atau walinya. Ketentuan mengenai hak untuk membatalkan perbuatan hukum tersebut secara spesifik diatur dalam...",
+                options: {
+                    A: "Pasal 1243 KUHPerdata",
+                    B: "Pasal 1338 KUHPerdata",
+                    C: "Pasal 1320 KUHPerdata",
+                    D: "Pasal 1446 KUHPerdata"
+                },
+                correctAnswer: "D"
+            },
+            {
+                text: "Berdasarkan ketentuan hukum yang berlaku, seseorang dianggap belum dewasa jika belum mencapai umur genap 21 tahun dan belum pernah kawin sebelumnya. Sebaliknya, seseorang dianggap dewasa jika telah berusia 21 tahun atau sudah pernah menikah. Ketentuan mengenai batasan umur tersebut diatur dalam...",
+                options: {
+                    A: "Pasal 1320 KUHPerdata",
+                    B: "Pasal 47 UU No. 1 Tahun 1974",
+                    C: "Pasal 1330 KUHPerdata",
+                    D: "Pasal 330 KUHPerdata"
+                },
+                correctAnswer: "D"
+            },
+            {
+                text: "Menurut Kitab Undang-Undang Hukum Perdata, segala sesuatu yang dapat menjadi objek hak milik disebut sebagai benda (zaak). Ketentuan yang mengatur mengenai definisi benda tersebut secara eksplisit dituangkan dalam…",
+                options: {
+                    A: "Pasal 499 KUHPerdata",
+                    B: "Pasal 500 KUHPerdata",
+                    C: "Pasal 501 KUHPerdata",
+                    D: "Pasal 502 KUHPerdata"
+                },
+                correctAnswer: "A"
+            },
+            {
+                text: "Menurut Kitab Undang-Undang Hukum Perdata (KUHPerdata), benda (kebendaan) dibagi menjadi dua kategori utama, yaitu benda bergerak dan benda tidak bergerak. Ketentuan yang mengatur mengenai pembagian kategori benda tersebut terdapat dalam...",
+                options: {
+                    A: "Pasal 505 KUHPerdata",
+                    B: "Pasal 504 KUHPerdata",
+                    C: "Pasal 506 KUHPerdata",
+                    D: "Pasal 499 KUHPerdata"
+                },
+                correctAnswer: "A"
+            },
+            {
+                text: "Menurut ketentuan hukum yang berlaku, pewarisan hanya dapat terjadi atau terbuka karena adanya suatu peristiwa tertentu. Dasar hukum yang mengatur bahwa warisan hanya jatuh karena kematian adalah...",
+                options: {
+                    A: "Pasal 832 KUHPerdata",
+                    B: "Pasal 830 KUHPerdata",
+                    C: "Pasal 833 KUHPerdata",
+                    D: "Pasal 838 KUHPerdata"
+                },
+                correctAnswer: "B"
+            },
+            {
+                text: "Menurut Kitab Undang-Undang Hukum Perdata (KUHPerdata), ketentuan yang mengatur mengenai prinsip bahwa ahli waris adalah keluarga sedarah, baik sah maupun luar kawin, dan suami atau isteri yang hidup terlama, terdapat dalam pasal...",
+                options: {
+                    A: "Pasal 830 KUHPerdata",
+                    B: "Pasal 833 KUHPerdata",
+                    C: "Pasal 852 KUHPerdata",
+                    D: "Pasal 832 KUHPerdata"
+                },
+                correctAnswer: "D"
+            },
+            {
+                text: "Berdasarkan Kitab Undang-Undang Hukum Perdata (KUHPerdata), secara hukum segala hak dan kewajiban dari seseorang yang meninggal dunia beralih demi hukum kepada para ahli warisnya. Ketentuan mengenai perolehan hak ahli waris secara langsung (saisine) ini diatur dalam...",
+                options: {
+                    A: "Pasal 832 KUHPerdata",
+                    B: "Pasal 833 KUHPerdata",
+                    C: "Pasal 830 KUHPerdata",
+                    D: "Pasal 834 KUHPerdata"
+                },
+                correctAnswer: "B"
+            },
+            {
+                text: "Manakah pasal dalam Kitab Undang-Undang Hukum Perdata (KUHPerdata) yang mengatur tentang Legitime Portie, yaitu bagian warisan mutlak yang tidak dapat dikurangi oleh pewaris melalui wasiat atau hibah demi melindungi hak ahli waris dalam garis lurus?",
+                options: {
+                    A: "Pasal 914 KUHPerdata",
+                    B: "Pasal 913 KUHPerdata",
+                    C: "Pasal 832 KUHPerdata",
+                    D: "Pasal 1066 KUHPerdata"
+                },
+                correctAnswer: "B"
+            },
+            {
+                text: "Menurut ketentuan hukum yang berlaku di Indonesia, pasal manakah dalam Kitab Undang-Undang Hukum Perdata (KUHPerdata) yang mengatur bahwa sejak saat perkawinan dilangsungkan, demi hukum terjadilah persatuan bulat antara harta kekayaan suami dan istri (harta bersama), sepanjang tidak ditentukan lain dalam perjanjian perkawinan?",
+                options: {
+                    A: "Pasal 119 KUHPerdata",
+                    B: "Pasal 124 KUHPerdata",
+                    C: "Pasal 110 KUHPerdata",
+                    D: "Pasal 132 KUHPerdata"
+                },
+                correctAnswer: "A"
+            },
+            {
+                text: "Dasar hukum mengenai pengertian hibah dalam tata hukum perdata di Indonesia diatur dalam pasal berapakah di Kitab Undang-Undang Hukum Perdata (KUHPerdata)?",
+                options: {
+                    A: "Pasal 1313 KUHPerdata",
+                    B: "Pasal 1457 KUHPerdata",
+                    C: "Pasal 1666 KUHPerdata",
+                    D: "Pasal 1601 KUHPerdata"
+                },
+                correctAnswer: "C"
+            },
+            {
+                text: "Ketentuan yang memberikan hak kepada ahli waris untuk mempertimbangkan keputusannya—apakah akan menerima secara murni, menerima dengan hak istimewa untuk mengadakan pendaftaran harta peninggalan (beneficiair), atau menolak warisan—setelah menyelidiki keadaan harta peninggalan tersebut, diatur dalam:",
+                options: {
+                    A: "Pasal 1044 KUHPerdata",
+                    B: "Pasal 1023 KUHPerdata",
+                    C: "Pasal 832 KUHPerdata",
+                    D: "Pasal 1100 KUHPerdata"
+                },
+                correctAnswer: "B"
+            },
+            {
+                text: "Dalam hal pewaris meninggal dunia tanpa meninggalkan keturunan (Golongan I) maupun saudara (Golongan II), maka pembagian warisan untuk golongan ketiga diatur dengan membagi harta menjadi dua bagian (kloving). Separuh untuk garis ayah dan separuh untuk garis ibu, yang diberikan kepada ahli waris terdekat derajatnya. Ketentuan mengenai pembagian ini secara spesifik diatur dalam...",
+                options: {
+                    A: "Pasal 858 KUHPerdata",
+                    B: "Pasal 854 KUHPerdata",
+                    C: "Pasal 850 KUHPerdata",
+                    D: "Pasal 853 KUHPerdata"
+                },
+                correctAnswer: "D"
+            },
+            {
+                text: "Pasal dalam Kitab Undang-Undang Hukum Perdata (KUHPerdata) yang secara spesifik mengatur bahwa sejak saat perkawinan dilangsungkan, demi hukum terjadilah persatuan bulat antara harta kekayaan suami dan istri (harta bersama), kecuali jika ada perjanjian kawin, adalah...",
+                options: {
+                    A: "Pasal 132 KUHPerdata",
+                    B: "Pasal 124 KUHPerdata",
+                    C: "Pasal 140 KUHPerdata",
+                    D: "Pasal 119 KUHPerdata"
+                },
+                correctAnswer: "D"
+            },
+            {
+                text: "Manakah dasar hukum dalam Kitab Undang-Undang Hukum Perdata (KUHPerdata) yang memberikan definisi mengenai surat wasiat atau testament sebagai suatu akta yang memuat pernyataan seseorang tentang apa yang dikehendakinya terjadi setelah ia meninggal dunia?",
+                options: {
+                    A: "Pasal 913 KUHPerdata",
+                    B: "Pasal 830 KUHPerdata",
+                    C: "Pasal 1313 KUHPerdata",
+                    D: "Pasal 875 KUHPerdata"
+                },
+                correctAnswer: "D"
+            },
+            {
+                text: "Dari manakah sumber lahirnya suatu perikatan (berdasarkan Pasal 1233 KUHPerdata)?",
+                options: {
+                    A: "Perjanjian dan Undang-undang",
+                    B: "Undang-undang dan Kebiasaan",
+                    C: "Perjanjian dan Putusan Hakim",
+                    D: "Moral dan Keadilan"
+                },
+                correctAnswer: "A"
+            },
+            {
+                text: "Menurut ketentuan hukum perdata, penggantian biaya, rugi, dan bunga karena tidak dipenuhinya suatu perikatan mulai diwajibkan apabila debitur telah dinyatakan lalai tetapi tetap melalaikannya, atau jika sesuatu yang harus diberikan/dibuat hanya dapat diberikan dalam tenggang waktu yang telah lampau (Ganti Rugi Karena Wanprestasi). Ketentuan ini diatur dalam...",
+                options: {
+                    A: "Pasal 1313 KUHPerdata",
+                    B: "Pasal 1233 KUHPerdata",
+                    C: "Pasal 1243 KUHPerdata",
+                    D: "Pasal 1365 KUHPerdata"
+                },
+                correctAnswer: "C"
+            },
+            {
+                text: "Berdasarkan ketentuan hukum perdata, setiap perikatan bertujuan untuk memberikan prestasi yang dapat berupa: memberikan sesuatu, berbuat sesuatu, atau tidak berbuat sesuatu. Ketentuan mengenai bentuk-bentuk prestasi tersebut diatur dalam pasal...",
+                options: {
+                    A: "Pasal 1313 KUHPerdata",
+                    B: "Pasal 1233 KUHPerdata",
+                    C: "Pasal 1234 KUHPerdata",
+                    D: "Pasal 1320 KUHPerdata"
+                },
+                correctAnswer: "C"
+            },
+            {
+                text: "Ketentuan dalam Kitab Undang-Undang Hukum Perdata (KUHPerdata) yang mengatur bahwa debitur dinyatakan lalai dengan surat perintah (wanprestasi), atau dengan akta sejenis itu, atau berdasarkan kekuatan dari perikatan itu sendiri adalah...",
+                options: {
+                    A: "Pasal 1233 KUHPerdata",
+                    B: "Pasal 1338 KUHPerdata",
+                    C: "Pasal 1238 KUHPerdata",
+                    D: "Pasal 1365 KUHPerdata"
+                },
+                correctAnswer: "C"
+            },
+            {
+                text: "Definisi perjanjian sebagai suatu perbuatan di mana satu orang atau lebih mengikatkan diri terhadap satu orang lain atau lebih, merupakan bunyi dari...",
+                options: {
+                    A: "Pasal 1233 KUHPerdata",
+                    B: "Pasal 1338 KUHPerdata",
+                    C: "Pasal 1313 KUHPerdata",
+                    D: "Pasal 1320 KUHPerdata"
+                },
+                correctAnswer: "C"
+            },
+            {
+                text: "Syarat sahnya suatu perjanjian yang terdiri dari kesepakatan, kecakapan, suatu hal tertentu, dan sebab yang halal diatur dalam ketentuan...",
+                options: {
+                    A: "Pasal 1320 KUHPerdata",
+                    B: "Pasal 1338 KUHPerdata",
+                    C: "Pasal 1365 KUHPerdata",
+                    D: "Pasal 1233 KUHPerdata"
+                },
+                correctAnswer: "A"
+            },
+            {
+                text: "Di dalam hukum perjanjian Indonesia, terdapat asas yang menyatakan bahwa semua perjanjian yang dibuat secara sah berlaku sebagai undang-undang bagi mereka yang membuatnya. Prinsip ini dikenal sebagai asas Pacta Sunt Servanda (Kebebasan Berkontrak). Ketentuan tersebut secara eksplisit diatur dalam Kitab Undang-Undang Hukum Perdata (KUHPerdata) pada...",
+                options: {
+                    A: "Pasal 1320 KUHPerdata",
+                    B: "Pasal 1338 KUHPerdata",
+                    C: "Pasal 1365 KUHPerdata",
+                    D: "Pasal 1233 KUHPerdata"
+                },
+                correctAnswer: "B"
+            },
+            {
+                text: "Pasal dalam Kitab Undang-Undang Hukum Perdata (KUHPerdata) yang mengatur bahwa setiap perbuatan yang melanggar hukum dan membawa kerugian kepada orang lain mewajibkan orang yang menimbulkan kerugian tersebut untuk mengganti kerugian adalah (PMH)...",
+                options: {
+                    A: "Pasal 1365 KUHPerdata",
+                    B: "Pasal 1234 KUHPerdata",
+                    C: "Pasal 1338 KUHPerdata",
+                    D: "Pasal 1366 KUHPerdata"
+                },
+                correctAnswer: "A"
+            },
+            {
+                text: "Manakah pasal dalam Kitab Undang-Undang Hukum Perdata (KUHPerdata) yang secara spesifik mengatur tentang sepuluh cara hapusnya perikatan, mulai dari pembayaran, penitipan, pembaruan utang, perjumpaan utang, percampuran utang, pembebasan utang, musnahnya barang terutang, kebatalan/pembatalan, berlakunya syarat batal, dan lewat waktu?",
+                options: {
+                    A: "Pasal 1320 KUHPerdata",
+                    B: "Pasal 1313 KUHPerdata",
+                    C: "Pasal 1338 KUHPerdata",
+                    D: "Pasal 1381 KUHPerdata"
+                },
+                correctAnswer: "D"
+            },
+            {
+                text: "Dalam hukum acara perdata, asas yang menyatakan bahwa 'Barangsiapa yang mendalilkan mempunyai suatu hak, atau menunjuk suatu peristiwa untuk meneguhkan haknya, wajib membuktikan adanya hak atau peristiwa tersebut' diatur secara tegas dalam (beban pembuktian/actori incumbit probatio)...",
+                options: {
+                    A: "Pasal 1234 KUHPerdata",
+                    B: "Pasal 1338 KUHPerdata",
+                    C: "Pasal 1865 KUHPerdata",
+                    D: "Pasal 1365 KUHPerdata"
+                },
+                correctAnswer: "C"
+            },
+            {
+                text: "Di dalam sistem hukum perdata Indonesia, ketentuan yang secara spesifik mengatur tentang jenis-jenis alat bukti yang sah dalam persidangan tercantum dalam...",
+                options: {
+                    A: "Pasal 1320 KUHPerdata",
+                    B: "Pasal 1233 KUHPerdata",
+                    C: "Pasal 1365 KUHPerdata",
+                    D: "Pasal 1866 KUHPerdata"
+                },
+                correctAnswer: "D"
+            },
+            {
+                text: "Dalam hukum perdata Indonesia, pembuktian dengan tulisan dilakukan dengan akta otentik atau dengan akta di bawah tangan. Ketentuan yang menjadi dasar adanya perbedaan jenis akta dan kekuatan pembuktiannya ini diatur dalam...",
+                options: {
+                    A: "Pasal 1233 KUHPerdata",
+                    B: "Pasal 1907 KUHPerdata",
+                    C: "Pasal 1867 KUHPerdata",
+                    D: "Pasal 1338 KUHPerdata"
+                },
+                correctAnswer: "C"
+            },
+            {
+                text: "Menurut Kitab Undang-Undang Hukum Perdata, suatu persetujuan atau perjanjian dianggap tidak sah dan dapat dibatalkan apabila kesepakatan tersebut diberikan karena adanya unsur kekhilafan, paksaan, atau penipuan. Hal ini diatur secara spesifik dalam...",
+                options: {
+                    A: "Pasal 1320 KUHPerdata",
+                    B: "Pasal 1338 KUHPerdata",
+                    C: "Pasal 1321 KUHPerdata",
+                    D: "Pasal 1233 KUHPerdata"
+                },
+                correctAnswer: "C"
+            },
+            {
+                text: "Berdasarkan Kitab Undang-Undang Hukum Perdata (KUHPerdata), segala tuntutan hukum, baik yang bersifat kebendaan maupun yang bersifat perorangan, hapus karena lewatnya waktu 30 tahun. Ketentuan ini diatur dalam...",
+                options: {
+                    A: "Pasal 1967 KUHPerdata",
+                    B: "Pasal 1977 KUHPerdata",
+                    C: "Pasal 1963 KUHPerdata",
+                    D: "Pasal 1930 KUHPerdata"
+                },
+                correctAnswer: "A"
+            },
+            {
+                text: "Peraturan Mahkamah Agung (PERMA) nomor berapakah yang mengatur mengenai Pedoman Mengadili Permohonan Dispensasi Kawin di Indonesia?",
+                options: {
+                    A: "PERMA No. 1 Tahun 2016",
+                    B: "PERMA No. 3 Tahun 2017",
+                    C: "PERMA No. 5 Tahun 2019",
+                    D: "PERMA No. 1 Tahun 2020"
+                },
+                correctAnswer: "C"
+            },
+            {
+                text: "Dalam hukum perjanjian, suatu kontrak yang mengandung cacat kehendak (seperti adanya paksaan, kekhilafan, atau penipuan) mengakibatkan perjanjian tersebut memiliki status hukum yang...",
+                options: {
+                    A: "Batal demi hukum (null and void)",
+                    B: "Dapat dibatalkan (voidable)",
+                    C: "Sah dan mengikat (valid and binding)",
+                    D: "Tidak dapat dilaksanakan (unenforceable)"
+                },
+                correctAnswer: "B"
+            },
+            {
+                text: "Dalam terminologi hukum, keadaan di mana suatu perjanjian atau perbuatan hukum dianggap tidak pernah ada sejak semula karena tidak terpenuhinya syarat objektif disebut sebagai...",
+                options: {
+                    A: "Voidable",
+                    B: "Null and Void",
+                    C: "Dapat Dibatalkan",
+                    D: "Wanprestasi"
+                },
+                correctAnswer: "B"
+            },
+            {
+                text: "Dalam hukum perjanjian, syarat sahnya perjanjian dibedakan menjadi syarat subjektif (kesepakatan dan kecakapan) dan syarat objektif. Mengapa kesepakatan dan kecakapan disebut sebagai syarat subjektif?",
+                options: {
+                    A: "Karena berkaitan dengan objek atau barang yang diperjanjikan oleh para pihak.",
+                    B: "Refleksi subjek atau orang yang membuat perjanjian tersebut.",
+                    C: "Karena menentukan apakah isi perjanjian tersebut dilarang oleh undang-undang atau tidak.",
+                    D: "Karena berkaitan dengan bentuk formalitas dari dokumen perjanjian yang ditandatangani."
+                },
+                correctAnswer: "B"
+            },
+            {
+                text: "Dalam hukum perdata, suatu keadaan di mana debitur terhalang untuk memenuhi prestasinya karena terjadi peristiwa yang tidak terduga di luar salahnya, yang dinamakan keadaan memaksa, dikenal juga dengan istilah...",
+                options: {
+                    A: "Wanprestasi",
+                    B: "Overmacht",
+                    C: "Somasi",
+                    D: "Resiko"
+                },
+                correctAnswer: "B"
+            },
+            {
+                text: "Dalam hukum pembuktian perdata, akta otentik memiliki beberapa jenis kekuatan pembuktian. Di antaranya adalah kekuatan yang melekat pada akta itu sendiri, di mana akta tersebut harus dianggap sah sebagai akta otentik dan memiliki kemampuan sebagai alat bukti yang mengikat sampai dibuktikan sebaliknya secara hukum. Kekuatan pembuktian yang dimaksud berdasarkan keterangan tersebut adalah...",
+                options: {
+                    A: "Kekuatan Pembuktian Materiil",
+                    B: "Kekuatan Pembuktian Lahiriah",
+                    C: "Kekuatan Pembuktian Formil",
+                    D: "Kekuatan Pembuktian Bebas"
+                },
+                correctAnswer: "B"
+            },
+            {
+                text: "Menurut hukum waris Barat (KUHPerdata), kedudukan suami/istri yang hidup terlama beserta anak-anak yang ditinggalkan oleh pewaris berada pada kedudukan Ahli Waris Golongan I. Manakah pernyataan berikut yang paling tepat mengenai hak dan prinsip pembagian porsi warisan bagi para ahli waris di dalam Golongan I tersebut?",
+                options: {
+                    A: "Bagian untuk suami/istri yang hidup terlama disamakan dengan bagian seorang anak, di mana warisan dibagi rata (sama besar) di antara mereka.",
+                    B: "Suami/istri yang hidup terlama berhak mendapatkan seluruh harta warisan, sedangkan anak-anak hanya mendapatkan hak atas bagian mutlak (legitieme portie).",
+                    C: "Bagian anak-anak selalu didahului dan dihitung lebih besar dua kali lipat daripada bagian suami/istri yang hidup terlama.",
+                    D: "Suami/istri yang hidup terlama hanya mendapatkan 1/4 bagian dari total harta, sedangkan sisanya dibagi habis untuk anak-anak dan keturunannya."
+                },
+                correctAnswer: "A"
+            },
+            {
+                text: "Pewaris meninggal dunia tanpa meninggalkan surat wasiat, serta tidak memiliki istri/suami maupun anak (Golongan I tidak ada). Ahli waris yang ditinggalkan adalah ayah, ibu, dan 2 (dua) orang saudara kandung. Berdasarkan ketentuan Hukum Waris BW mengenai Ahli Waris Golongan II, bagaimanakah pembagian porsi warisan yang tepat?",
+                options: {
+                    A: "Ayah dan Ibu masing-masing mendapatkan 1/2 bagian, sedangkan saudara kandung tidak mendapatkan bagian karena terhalang oleh orang tua.",
+                    B: "Warisan dibagi rata secara bij hoofden (per kepala) kepada seluruh ahli waris yang ada, sehingga masing-masing mendapatkan 1/4 bagian.",
+                    C: "Ayah dan Ibu masing-masing mendapatkan minimal 1/4 bagian, sedangkan sisa 1/2 bagian warisan dibagi rata kepada kedua saudara kandung.",
+                    D: "Ayah dan Ibu bersama-sama mendapatkan 1/4 bagian, sedangkan sisa 3/4 bagian warisan sepenuhnya menjadi hak saudara kandung dan keturunannya."
+                },
+                correctAnswer: "C"
+            },
+            {
+                text: "Seorang pewaris meninggal dunia tanpa meninggalkan istri, anak, saudara kandung, maupun orang tua. Ahli waris yang masih hidup hanyalah kakek dan nenek dari pihak ayah, serta nenek dari pihak ibu. Berdasarkan ketentuan hukum waris Burgerlijk Wetboek (BW) mengenai ahli waris Golongan III, bagaimanakah pembagian harta peninggalan pewaris tersebut?",
+                options: {
+                    A: "Seluruh harta peninggalan dibagi rata kepada kakek dan kedua nenek yang masih hidup, sehingga masing-masing mendapatkan 1/3 bagian.",
+                    B: "Berlaku asas Kloofing, di mana harta dibagi dua terlebih dahulu: 1/2 bagian untuk garis ayah (dibagi rata antara kakek dan nenek pihak ayah), dan 1/2 bagian mutlak untuk garis ibu (diterima seluruhnya oleh nenek pihak ibu).",
+                    C: "Karena dari pihak ayah yang hidup ada dua orang (kakek dan nenek), maka garis ayah mendapatkan 2/3 bagian, sedangkan garis ibu hanya mendapatkan 1/3 bagian.",
+                    D: "Harta tidak dapat dibagi dua karena jumlah ahli waris di kedua garis keturunan tidak seimbang, sehingga pembagiannya harus menunggu penetapan pengadilan."
+                },
+                correctAnswer: "B"
+            },
+            {
+                text: "Dalam hukum kewarisan perdata (KUHPerdata), apabila seorang pewaris meninggal dunia tanpa meninggalkan ahli waris dari Golongan I, Golongan II, maupun Golongan III, maka harta peninggalannya akan jatuh kepada ahli waris Golongan IV. Manakah di antara prinsip berikut yang paling tepat menggambarkan mekanisme pembagian waris untuk Golongan IV?",
+                options: {
+                    A: "Harta warisan langsung dibagi rata kepada seluruh saudara kandung orang tua tanpa memedulikan seberapa jauh derajat kekerabatannya dengan pewaris.",
+                    B: "Warisan diberikan kepada saudara dalam garis menyamping (seperti paman dan bibi) hingga derajat ke-6, di mana pembagiannya didasarkan pada derajat kekerabatan yang paling dekat dengan pewaris.",
+                    C: "Pembagian harta waris dilakukan dengan metode kloofing (pemisahan dua garis) secara mutlak hingga batas derajat tanpa batas sepanjang masih memiliki hubungan darah.",
+                    D: "Sisa harta warisan Golongan IV otomatis diserahkan sepenuhnya kepada negara jika pewaris masih memiliki paman (derajat ke-3) dan sepupu sepupu (derajat ke-5)."
+                },
+                correctAnswer: "B"
+            },
+            {
+                text: "Pewaris meninggal dunia tanpa meninggalkan surat wasiat, serta tidak memiliki suami/istri maupun anak (Golongan I tidak ada). Ahli waris yang ditinggalkan adalah Ayah, Ibu, dan 2 (dua) orang saudara kandung. Berdasarkan ketentuan hukum waris Barat (KUHPerdata) mengenai ahli waris Golongan II, bagaimanakah ketetapan pembagian porsi warisan yang paling tepat?",
+                options: {
+                    A: "Ayah dan Ibu masing-masing mendapatkan 1/2 bagian, sedangkan saudara kandung tidak mendapatkan bagian karena terhalang oleh orang tua.",
+                    B: "Ayah, Ibu, dan kedua saudara kandung membagi rata seluruh harta warisan, sehingga masing-masing mendapatkan 1/4 bagian.",
+                    C: "Ayah dan Ibu masing-masing minimal mendapatkan 1/4 bagian, sedangkan sisanya sebesar 1/2 bagian dibagi rata kepada kedua saudara kandung.",
+                    D: "Kedua saudara kandung mendapatkan seluruh harta warisan secara mutlak, sedangkan Ayah dan Ibu hanya mendapatkan hak sewa atas harta tersebut."
+                },
+                correctAnswer: "C"
+            },
+            {
+                text: "Togar meninggal dunia dengan meninggalkan seorang istri dan dua orang anak. Total harta yang terkumpul selama perkawinan mereka adalah sebesar Rp600 juta. Jika penyelesaian pembagian harta dan warisan dilakukan berdasarkan ketentuan Hukum Perdata Barat (Burgerlijk Wetboek), manakah formula pembagian yang paling tepat sesuai dengan hak masing-masing ahli waris?",
+                options: {
+                    A: "Seluruh harta Rp600 juta langsung ditetapkan sebagai harta warisan, sehingga istri, anak ke-1, dan anak ke-2 masing-masing mendapatkan Rp200 juta dengan porsi yang sama.",
+                    B: "Harta bersama dibagi dua terlebih dahulu, di mana istri mendapatkan Rp300 juta sebagai haknya, lalu sisa Rp300 juta dibagi rata untuk dua anaknya saja, masing-masing Rp150 juta.",
+                    C: "Istri mendapatkan harta bersama sebesar Rp300 juta, sedangkan sisa Rp300 juta merupakan harta warisan yang dibagi rata kepada Istri, Anak ke-1, dan Anak ke-2, sehingga masing-masing mendapatkan tambahan Rp100 juta.",
+                    D: "Harta bersama sebesar Rp300 juta diambil oleh istri, lalu sisa Rp300 juta dibagi berdasarkan gender di mana anak laki-laki mendapat porsi lebih besar daripada anak perempuan."
+                },
+                correctAnswer: "C"
+            },
+            {
+                text: "Togar meninggal dunia dengan status membujang (tidak memiliki anak) dan istrinya telah lama meninggal dunia. Ia meninggalkan harta warisan bersih senilai Rp400 juta. Pada saat ia wafat, ahli waris yang masih hidup adalah Ibu kandungnya dan 3 orang saudara kandung (Ayah Togar sudah meninggal dunia). Berdasarkan ketentuan Pasal 854 - 857 KUHPerdata, berapakah pembagian harta warisan yang paling tepat untuk Ibu dan salah seorang saudara kandung Togar?",
+                options: {
+                    A: "Ibu mendapatkan Rp100 juta, dan masing-masing saudara kandung mendapatkan Rp100 juta.",
+                    B: "Ibu mendapatkan Rp200 juta, dan masing-masing saudara kandung mendapatkan Rp66,6 juta.",
+                    C: "Ibu mendapatkan Rp100 juta, dan masing-masing saudara kandung mendapatkan Rp300 juta.",
+                    D: "Ibu mendapatkan Rp100 juta, dan masing-masing saudara kandung mendapatkan Rp100 juta dari sisa harta warisan setelah dikurangi bagian Ibu."
+                },
+                correctAnswer: "A"
+            },
+            {
+                text: "Seorang pewaris meninggal dunia tanpa meninggalkan surat wasiat. Pada saat wafat, ia tidak memiliki istri, anak, orang tua, maupun saudara kandung. Ahli waris yang tersisa hanyalah kakek dan paman dari garis ayah, serta nenek dan bibi dari garis ibu. Berdasarkan Hukum Perdata Barat (KUHPerdata), bagaimana sistem pembagian warisan yang harus diterapkan oleh pengadilan terhadap harta peninggalan tersebut?",
+                options: {
+                    A: "Harta warisan dibagi rata secara kehoofden (per kepala) kepada seluruh kerabat yang tersisa tanpa membedakan garis keturunan, karena kedudukan derajat mereka setara.",
+                    B: "Seluruh harta warisan jatuh kepada kerabat dari garis ayah karena dalam hukum perdata berlaku asas patrilineal yang mengutamakan garis laki-laki.",
+                    C: "Harta warisan harus dibelah menjadi dua bagian yang sama besar (Kloving), di mana 50% diberikan untuk kerabat dari garis ayah dan 50% sisanya diberikan untuk kerabat dari garis ibu.",
+                    D: "Kerabat dari garis ibu mendapat bagian lebih besar daripada garis ayah karena kedekatan hubungan emosional yang dibuktikan di persidangan."
+                },
+                correctAnswer: "C"
+            },
+            {
+                text: "Andi, seorang pria lajang, meninggal dunia tanpa meninggalkan surat wasiat. Ia meninggalkan harta bersih sebesar Rp600.000.000. Pada saat meninggal dunia, kedua orang tuanya (Ayah dan Ibu) masih hidup, serta ia memiliki 2 orang saudara kandung bernama Budi dan Citra. Berdasarkan ketentuan Pasal 854 - 856 KUHPerdata mengenai ahli waris Golongan II, bagaimanakah pembagian harta warisan yang tepat?",
+                options: {
+                    A: "Ayah dan Ibu masing-masing mendapatkan Rp200.000.000, sedangkan sisa Rp200.000.000 dibagi berdua untuk Budi dan Citra.",
+                    B: "Karena ada saudara kandung, Ayah dan Ibu hanya mendapatkan hak minimal masing-masing Rp100.000.000, sedangkan sisanya dibagi rata kepada Budi dan Citra.",
+                    C: "Ayah, Ibu, Budi, dan Citra masing-masing mendapatkan bagian yang sama besar, yaitu sebesar Rp150.000.000.",
+                    D: "Seluruh harta sebesar Rp600.000.000 jatuh kepada Ayah dan Ibu sebagai kewajiban nafkah mutlak, sedangkan saudara kandung tidak mendapatkan bagian."
+                },
+                correctAnswer: "C"
+            },
+            {
+                text: "Dalam hukum waris perdata Barat (Burgerlijk Wetboek), dikenal asas utama yang mengatur hak seseorang untuk tampil sebagai ahli waris secara sah menurut undang-undang, yang disebut sebagai prinsip Ab Intestato. Manakah pernyataan di bawah ini yang paling akurat menggambarkan esensi mutlak dari prinsip tersebut?",
+                options: {
+                    A: "Pewarisan sepenuhnya didasarkan pada adanya surat wasiat (testamen) yang dibuat oleh pewaris sebelum meninggal dunia, tanpa memandang hubungan kekerabatan.",
+                    B: "Pewarisan didasarkan pada kedekatan hubungan darah dengan pewaris, dengan pengecualian mutlak bahwa suami atau istri yang ditinggalkan tetap berhak menjadi ahli waris demi hukum.",
+                    C: "Pewarisan didasarkan pada ikatan perkawinan saja, sehingga seluruh anggota keluarga sedarah dari pihak suami maupun istri otomatis saling mewarisi.",
+                    D: "Pewarisan didasarkan pada keputusan pengadilan yang membagi harta peninggalan secara merata kepada seluruh anggota keluarga yang hidup bersama pewaris."
+                },
+                correctAnswer: "B"
+            },
+            {
+                text: "Seorang pewaris memiliki harta kekayaan yang cukup besar. Sebelum meninggal dunia, ia membuat sebuah wasiat (testamen) yang menyatakan bahwa seluruh harta warisannya dihibahkan kepada sebuah yayasan sosial, sehingga tidak menyisakan bagian sama sekali untuk anak kandungnya. Berdasarkan hukum perdata (Legitime Portie), bagaimanakah status hukum dari tindakan pewaris tersebut?",
+                options: {
+                    A: "Wasiat tersebut sah dan mutlak sepenuhnya karena pembuatan wasiat merupakan hak prerogatif pemilik harta yang tidak dapat diganggu gugat oleh siapa pun.",
+                    B: "Wasiat tersebut batal demi hukum karena undang-undang melarang seseorang memberikan hibah wasiat kepada lembaga sosial jika masih memiliki ahli waris.",
+                    C: "Wasiat tersebut tetap dapat dijalankan, namun jumlahnya harus dikurangi terlebih dahulu untuk memenuhi bagian mutlak (legitime portie) ahli waris dalam garis lurus yang dilindungi oleh undang-undang.",
+                    D: "Wasiat tersebut otomatis menjadi gugur dan seluruh harta warisan harus dibagi rata kepada seluruh kerabat dekat pewaris, baik dalam garis lurus maupun garis menyimpang."
+                },
+                correctAnswer: "C"
+            },
+            {
+                text: "Tuan Wijaya meninggal dunia dengan meninggalkan warisan senilai Rp1.200.000.000,-. Ia meninggalkan seorang istri dan seorang anak kandung sah bernama Budi. Sebelum meninggal, Tuan Wijaya membuat wasiat (testamen) yang menghibahkan seluruh harta warisannya kepada sebuah yayasan sosial. Berapakah besaran porsi mutlak (Legitieme Portie) yang berhak dituntut oleh Budi menurut ketentuan hukum waris KUHPerdata?",
+                options: {
+                    A: "1/2 dari seluruh harta warisan",
+                    B: "1/4 dari seluruh harta warisan",
+                    C: "2/3 dari bagiannya menurut undang-undang",
+                    D: "1/2 dari bagiannya menurut undang-undang"
+                },
+                correctAnswer: "D"
+            },
+            {
+                text: "Nyonya Renata wafat dan meninggalkan dua orang anak kandung yang sah, yaitu Dani dan Dina. Semasa hidupnya, Nyonya Renata membuat hibah wasiat kepada pihak ketiga yang dinilai melanggar hak mutlak anak-anaknya. Dalam mengajukan gugatan inkorporasi/reduksi, berapakah besaran bagian mutlak (Legitieme Portie) yang dilindungi oleh undang-undang untuk Dani dan Dina bersama-sama?",
+                options: {
+                    A: "1/3 dari bagian mereka menurut undang-undang",
+                    B: "1/2 dari bagian mereka menurut undang-undang",
+                    C: "2/3 dari bagian mereka menurut undang-undang",
+                    D: "3/4 dari bagian mereka menurut undang-undang"
+                },
+                correctAnswer: "C"
+            },
+            {
+                text: "Seorang pewaris meninggal dunia dan meninggalkan 4 (empat) orang anak sah sebagai ahli warisnya. Pewaris ternyata telah menghibahkan sebagian besar asetnya kepada pihak luar sehingga menyisakan sedikit bagian untuk anak-anaknya. Menurut KUHPerdata, batas minimal kolektif yang tidak boleh dikurangi oleh tindakan pewaris tersebut bagi keempat anaknya adalah sebesar...",
+                options: {
+                    A: "3/4 dari bagian menurut undang-undang",
+                    B: "2/3 dari bagian menurut undang-undang",
+                    C: "1/2 dari bagian menurut undang-undang",
+                    D: "Seluruh harta warisan dibagi rata dikurangi hak bagian istri"
+                },
+                correctAnswer: "A"
+            },
+            {
+                text: "Seorang pewaris meninggal dunia dengan meninggalkan harta warisan bersih senilai Rp1.200.000.000. Ahli waris ab intestato (menurut undang-undang) yang ditinggalkan adalah seorang istri dan 2 orang anak sah. Semasa hidupnya, pewaris membuat wasiat (testamen) yang memberikan harta sebesar Rp600.000.000 kepada sahabat lamanya. Berdasarkan ketentuan Hukum Perdata Barat (BW) mengenai Legitieme Portie, bagaimanakah status hukum dari wasiat tersebut?",
+                options: {
+                    A: "Wasiat tersebut melanggar hukum dan batal demi hukum karena jumlahnya melampaui separuh dari total harta warisan yang ditinggalkan oleh pewaris.",
+                    B: "Wasiat tersebut tidak melanggar Legitieme Portie karena nilai wasiat (Rp600.000.000) masih di bawah batas maksimal Beschikbaar Deel (Rp666.666.667).",
+                    C: "Wasiat tersebut harus dikurangi (inkorting) karena hak mutlak untuk 2 orang anak adalah 3/4 dari bagian ab intestato mereka (sehingga memakan bagian legitieme portie).",
+                    D: "Wasiat tersebut sah sebagian, namun dipotong secara otomatis sebesar Rp66.666.667 agar bagian istri tidak berkurang."
+                },
+                correctAnswer: "C"
+            },
+            {
+                text: "Dalam pembuktian perkara perdata, selain alat bukti surat dan saksi, dikenal pula alat bukti yang berupa Persangkaan (Vermoedens). Menurut Pasal 173 HIR, persangkaan yang tidak berdasarkan undang-undang hanya boleh diperhatikan oleh hakim apabila persangkaan tersebut...",
+                options: {
+                    A: "Didukung oleh minimal 3 orang saksi keluarga",
+                    B: "Penting, saksama, tertentu, dan bersesuaian satu sama lain",
+                    C: "Dibuat tertulis di atas kertas segel atau bermeterai cukup",
+                    D: "Diakui langsung oleh pihak penggugat di luar persidangan"
+                },
+                correctAnswer: "B"
+            },
+            {
+                text: "Dalam hukum acara perdata, pengakuan yang diberikan oleh salah satu pihak di muka hakim/persidangan memberikan suatu bukti yang sempurna terhadap pihak yang menyatakannya. Ketentuan mengenai Pengakuan di Muka Hakim ini diatur secara spesifik dalam pasal berapa menurut HIR?",
+                options: {
+                    A: "Pasal 164 HIR",
+                    B: "Pasal 174 HIR",
+                    C: "Pasal 130 HIR",
+                    D: "Pasal 125 HIR"
+                },
+                correctAnswer: "B"
+            },
+            {
+                text: "Dalam hukum acara perdata, apabila tidak ada alat bukti lain yang dapat diajukan oleh salah satu pihak untuk membuktikan dalilnya, maka dapat digunakan alat bukti sumpah. Jenis sumpah yang diperintahkan oleh hakim karena jabatannya kepada salah satu pihak untuk melengkapi pembuktian peristiwa yang belum begitu pasti disebut dengan...",
+                options: {
+                    A: "Sumpah Pemutus (Decissoir)",
+                    B: "Sumpah Tambahan (Supletior)",
+                    C: "Sumpah Penaksir (Estimatoir)",
+                    D: "Sumpah Saksi"
+                },
+                correctAnswer: "B"
+            },
+            {
+                text: "Dalam hukum waris menurut Kitab Undang-Undang Hukum Perdata (KUHPerdata), berlaku asas bahwa keberadaan ahli waris Golongan I (anak, keturunan, serta suami atau istri yang hidup terlama) secara otomatis menutup (exclude) hak mewaris bagi golongan di bawahnya. Ketentuan yuridis yang secara tegas mengatur mengenai hak mewaris Golongan I serta bagian untuk suami/istri yang hidup terlama ini diatur dalam...",
+                options: {
+                    A: "Pasal 832 dan Pasal 838 KUHPerdata",
+                    B: "Pasal 852 dan Pasal 852a KUHPerdata",
+                    C: "Pasal 854 dan Pasal 856 KUHPerdata",
+                    D: "Pasal 874 dan Pasal 875 KUHPerdata"
+                },
+                correctAnswer: "B"
+            },
+            {
+                text: "Apabila seorang ahli waris memilih untuk menerima warisan secara beneficium (dengan hak istimewa untuk mengadakan pencatatan harta peninggalan) menurut KUHPerdata, manakah akibat hukum yang paling tepat terjadi jika ternyata jumlah utang pewaris lebih besar daripada seluruh aset warisan yang ditinggalkan?",
+                options: {
+                    A: "Ahli waris wajib melunasi sisa utang pewaris tersebut dengan menggunakan seluruh harta kekayaan pribadinya.",
+                    B: "Proses pelunasan utang dihentikan setelah seluruh aset warisan habis, sisa utang gugur demi hukum, dan harta pribadi ahli waris tetap aman.",
+                    C: "Warisan secara otomatis batal demi hukum dan dialihkan kepada negara untuk mengurus seluruh pelunasan utang yang tersisa.",
+                    D: "Ahli waris dikenai sanksi pidana kurungan karena dinilai gagal melunasi kewajiban hukum yang ditinggalkan oleh pewaris."
+                },
+                correctAnswer: "B"
+            },
+            {
+                text: "Dalam hukum kewarisan, apabila seorang pewaris meninggal dunia dengan meninggalkan sejumlah utang yang nilai totalnya ternyata jauh lebih besar daripada seluruh nilai aset atau harta peninggalan yang telah dicairkan (kondisi harta pailit), bagaimanakah prinsip penyelesaian dan pembagian harta tersebut kepada para kreditur?",
+                options: {
+                    A: "Harta peninggalan yang ada diberikan seluruhnya kepada kreditur yang pertama kali mengajukan tagihan, sedangkan kreditur lainnya tidak mendapatkan bagian.",
+                    B: "Seluruh aset warisan dicairkan dan dibagikan secara proporsional kepada para kreditur berdasarkan porsi atau persentase piutang masing-masing.",
+                    C: "Ahli waris wajib menggunakan harta pribadi mereka untuk melunasi sisa utang pewaris secara tanggung renteng sampai lunas.",
+                    D: "Pembagian harta dilakukan secara rata sama besar kepada setiap kreditur tanpa memedulikan perbedaan jumlah nominal piutang mereka."
+                },
+                correctAnswer: "B"
+            },
+            {
+                text: "Masih bertalian dengan konsep kedaluwarsa (Verjaring). Buku IV KUHPerdata mengatur bahwa segala tuntutan hukum, baik yang bersifat kebendaan maupun perorangan, dapat hapus karena lewatnya waktu tertentu. Berdasarkan Pasal 1967 KUHPerdata, berapakah jangka waktu umum yang ditetapkan undang-undang agar suatu tuntutan hukum hapus demi hukum karena kedaluwarsa?",
+                options: {
+                    A: "10 Tahun",
+                    B: "20 Tahun",
+                    C: "30 Tahun",
+                    D: "50 Tahun"
+                },
+                correctAnswer: "C"
+            },
+            {
+                text: "Buku III KUHPerdata menganut asas-asas penting dalam hukum perjanjian, salah satunya adalah Asas Konsensualisme yang tersirat dalam Pasal 1320 ayat (1) KUHPerdata. Apakah makna mendasar dari Asas Konsensualisme tersebut terhadap pembuatan suatu perjanjian/kontrak?",
+                options: {
+                    A: "Perjanjian baru dianggap sah apabila dibuat dalam bentuk tertulis secara otentik di hadapan Notaris.",
+                    B: "Perjanjian sudah lahir, sah, dan mengikat para pihak sejak detik tercapainya kata sepakat mengenai hal-hal pokok, meskipun belum dituangkan secara tertulis.",
+                    C: "Perjanjian hanya dapat dibatalkan jika disetujui oleh seluruh anggota keluarga para pihak.",
+                    D: "Perjanjian otomatis batal jika salah satu pihak meninggal dunia."
+                },
+                correctAnswer: "B"
+            },
+            {
+                text: "Pasal 1315 KUHPerdata mengatur salah satu asas penting dalam hukum perikatan, yaitu Asas Kepribadian (Personalitas). Apakah inti dari aturan pasal tersebut?",
+                options: {
+                    A: "Seseorang pada umumnya tidak dapat mengikatkan diri atau meminta ditetapkannya suatu janji kecuali untuk diri sendiri.",
+                    B: "Perjanjian bebas dibuat berdasarkan kepribadian para pihak.",
+                    C: "Seluruh hak keperdataan melekat pada kepribadian seorang manusia sejak lahir.",
+                    D: "Kontrak bisnis wajib mencantumkan identitas kartu tanda penduduk."
+                },
+                correctAnswer: "A"
+            },
+            {
+                text: "Subrogasi (Pasal 1400 KUHPerdata) adalah pergantian hak-hak kreditur oleh seorang pihak ketiga yang membayar kepada kreditur. Manakah akibat hukum dari subrogasi yang tepat?",
+                options: {
+                    A: "Perikatan antara debitur dan kreditur lama hapus, namun beralih menjadi hubungan perikatan baru antara debitur dan pihak ketiga tersebut selaku kreditur baru.",
+                    B: "Utang debitur otomatis hangus karena dibayarkan secara sukarela.",
+                    C: "Debitur dapat menolak pembayaran dari pihak ketiga.",
+                    D: "Kreditur lama tetap berhak menagih sisa bunga."
+                },
+                correctAnswer: "A"
+            },
+            {
+                text: "Berdasarkan Pasal 1963 KUHPerdata, apabila seseorang menguasai suatu benda tidak bergerak secara nyata dengan iktikad baik dan berdasarkan alas hak yang sah (titel), maka ia dapat memperoleh hak milik atas benda tersebut setelah lewatnya waktu...",
+                options: {
+                    A: "10 Tahun",
+                    B: "20 Tahun",
+                    C: "30 Tahun",
+                    D: "40 Tahun"
+                },
+                correctAnswer: "B"
+            },
+            {
+                text: "Buku III KUHPerdata memberikan hak istimewa bagi seorang penerima kuasa, pekerja, atau buruh untuk menahan benda milik pemberi kuasa/pemberi kerja yang berada di bawah penguasaannya, sampai seluruh pembayaran atau upah yang menjadi haknya dilunasi oleh pemilik benda tersebut. Hak hukum untuk menahan benda ini disebut...",
+                options: {
+                    A: "Hak Preferen",
+                    B: "Hak Reklame",
+                    C: "Hak Retensi",
+                    D: "Hak Milik Konstitutif"
+                },
+                correctAnswer: "C"
+            }
+        ];
+
+        // State Global Aplikasi
+        let userAnswers = {};
+        let doubtfulAnswers = {};
+        let currentQuestionIndex = 0;
+        let totalExamTime = 90 * 60; // 90 Menit dalam hitungan detik
+        let remainingTime = totalExamTime;
+        let timerInterval = null;
+        let startTimeStamp = null;
+
+        const STORAGE_KEY_STATE = "CAT_TRYOUT_STATE_V1";
+
+        const landingPage = document.getElementById('landing-page');
+        const examPage = document.getElementById('exam-page');
+        const resultPage = document.getElementById('result-page');
+        const fileInput = document.getElementById('file-input');
+        const fileStatus = document.getElementById('file-status');
+        const btnStart = document.getElementById('btn-start');
+        const infoTotalSoal = document.getElementById('info-total-soal');
+
+        fileInput.addEventListener('change', handleFileUpload);
+        window.addEventListener('load', checkSavedState);
+
+        // ----------------------------------------------------
+        // PARSER ENGINE: UNTUK MENDUKUNG UPLOAD FILE TAMBAHAN
+        // ----------------------------------------------------
+        function handleFileUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            fileStatus.innerHTML = `<span class="text-blue-600"><i class="fa-solid fa-spinner fa-spin"></i> Memuat berkas...</span>`;
+
+            if (file.name.endsWith('.docx')) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    mammoth.convertToHtml({ arrayBuffer: event.target.result })
+                        .then(function(result) { parseHtmlQuestions(result.value); })
+                        .catch(function(err) { fileStatus.innerHTML = `<span class="text-red-600">Gagal memproses file .docx</span>`; });
+                };
+                reader.readAsArrayBuffer(file);
+            } else if (file.name.endsWith('.txt')) {
+                const reader = new FileReader();
+                reader.onload = function(event) { parseTxtQuestions(event.target.result); };
+                reader.readAsText(file);
+            }
+        }
+
+        function parseHtmlQuestions(htmlContent) {
+            const doc = new DOMParser().parseFromString(htmlContent, 'text/html');
+            const paragraphs = doc.querySelectorAll('p');
+            let parsedQuestions = [];
+            let currentQ = null;
+
+            paragraphs.forEach((p) => {
+                let text = p.innerText ? p.innerText.trim() : p.textContent.trim();
+                if (!text) return;
+                const questionMatch = text.match(/^(\d+)[\.\s]+(.*)/);
+                if (questionMatch) {
+                    if (currentQ && Object.keys(currentQ.options).length > 0) parsedQuestions.push(currentQ);
+                    currentQ = { text: questionMatch[2], options: {}, correctAnswer: null };
+                } else if (currentQ) {
+                    const optionMatch = text.match(/^([A-D])[\.\s]+(.*)/i);
+                    if (optionMatch) {
+                        const key = optionMatch[1].toUpperCase();
+                        currentQ.options[key] = optionMatch[2];
+                        if (p.querySelector('strong') || p.querySelector('b')) currentQ.correctAnswer = key;
+                    } else {
+                        currentQ.text += "<br>" + text;
+                    }
+                }
+            });
+            if (currentQ && Object.keys(currentQ.options).length > 0) parsedQuestions.push(currentQ);
+            if(parsedQuestions.length > 0) {
+                questions = parsedQuestions;
+                infoTotalSoal.innerText = `${questions.length} Soal`;
+                fileStatus.innerHTML = `<span class="text-green-600 font-bold"><i class="fa-solid fa-circle-check"></i> Berhasil memperbarui ${questions.length} soal!</span>`;
+            }
+        }
+
+        function parseTxtQuestions(textData) {
+            const lines = textData.split('\n');
+            let parsedQuestions = [];
+            let currentQ = null;
+            lines.forEach((line) => {
+                let text = line.trim();
+                if (!text) return;
+                const questionMatch = text.match(/^(\d+)[\.\s]+(.*)/);
+                if (questionMatch) {
+                    if (currentQ && Object.keys(currentQ.options).length > 0) parsedQuestions.push(currentQ);
+                    currentQ = { text: questionMatch[2], options: {}, correctAnswer: 'A' };
+                } else if (currentQ) {
+                    const optionMatch = text.match(/^([A-D])[\.\s]+(.*)/i);
+                    if (optionMatch) currentQ.options[optionMatch[1].toUpperCase()] = optionMatch[2];
+                }
+            });
+            if (currentQ && Object.keys(currentQ.options).length > 0) parsedQuestions.push(currentQ);
+            if(parsedQuestions.length > 0) {
+                questions = parsedQuestions;
+                infoTotalSoal.innerText = `${questions.length} Soal`;
+                fileStatus.innerHTML = `<span class="text-green-600 font-bold"><i class="fa-solid fa-circle-check"></i> Berhasil memuat ${questions.length} soal!</span>`;
+            }
+        }
+
+        // ----------------------------------------------------
+        // MANAGEMENT STATE RETENTION (LOCAL STORAGE)
+        // ----------------------------------------------------
+        function saveCurrentState() {
+            const state = {
+                questions: questions,
+                userAnswers: userAnswers,
+                doubtfulAnswers: doubtfulAnswers,
+                currentQuestionIndex: currentQuestionIndex,
+                remainingTime: remainingTime,
+                username: document.getElementById('username').value,
+                startTimeStamp: startTimeStamp
+            };
+            localStorage.setItem(STORAGE_KEY_STATE, JSON.stringify(state));
+        }
+
+        function checkSavedState() {
+            const saved = localStorage.getItem(STORAGE_KEY_STATE);
+            if (saved) {
+                try {
+                    const state = JSON.parse(saved);
+                    if (confirm(`Ditemukan sesi ujian terputus atas nama "${state.username}". Ingin melanjutkan posisi terakhir?`)) {
+                        questions = state.questions;
+                        userAnswers = state.userAnswers;
+                        doubtfulAnswers = state.doubtfulAnswers;
+                        currentQuestionIndex = state.currentQuestionIndex;
+                        remainingTime = state.remainingTime;
+                        document.getElementById('username').value = state.username;
+                        startTimeStamp = state.startTimeStamp || new Date().toISOString();
+                        infoTotalSoal.innerText = `${questions.length} Soal`;
+                        startExam(true);
+                    } else {
+                        localStorage.removeItem(STORAGE_KEY_STATE);
+                    }
+                } catch(e) { console.error(e); }
+            }
+        }
+
+        // ----------------------------------------------------
+        // ALUR MEKANISME UTAMA UJIAN
+        // ----------------------------------------------------
+        btnStart.addEventListener('click', () => { startExam(false); });
+
+        function startExam(isRecovered) {
+            const nameInput = document.getElementById('username').value.trim();
+            if (!nameInput) { alert("Silakan masukkan nama Anda."); return; }
+
+            landingPage.classList.add('hidden');
+            examPage.classList.remove('hidden');
+
+            document.getElementById('exam-user-display').innerText = `Peserta: ${nameInput}`;
+
+            if (!isRecovered) {
+                remainingTime = 90 * 60;
+                userAnswers = {};
+                doubtfulAnswers = {};
+                currentQuestionIndex = 0;
+                startTimeStamp = new Date().toISOString();
+                saveCurrentState();
+            }
+
+            initNavGrid();
+            renderQuestion();
+            startTimer();
+            initSecurityListeners();
+        }
+
+        function initNavGrid() {
+            const grid = document.getElementById('nav-grid');
+            grid.innerHTML = '';
+            questions.forEach((_, idx) => {
+                const btn = document.createElement('button');
+                btn.id = `nav-item-${idx}`;
+                btn.innerText = idx + 1;
+                btn.className = getNavButtonClass(idx);
+                btn.onclick = () => { currentQuestionIndex = idx; renderQuestion(); };
+                grid.appendChild(btn);
+            });
+        }
+
+        function getNavButtonClass(idx) {
+            let base = "h-11 w-11 rounded-xl font-bold text-sm flex items-center justify-center transition border cursor-pointer ";
+            if (idx === currentQuestionIndex) base += "ring-2 ring-offset-2 ring-blue-600 ";
+            if (doubtfulAnswers[idx]) return base + "bg-amber-400 border-amber-500 text-white";
+            if (userAnswers[idx]) return base + "bg-blue-600 border-blue-700 text-white";
+            return base + "bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200";
+        }
+
+        function renderQuestion() {
+            if (questions.length === 0) return;
+            const q = questions[currentQuestionIndex];
+
+            document.getElementById('current-question-num').innerText = currentQuestionIndex + 1;
+            document.getElementById('question-text').innerHTML = q.text;
+
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+
+            Object.keys(q.options).forEach((key) => {
+                const isSelected = userAnswers[currentQuestionIndex] === key;
+                const optionBox = document.createElement('div');
+                optionBox.onclick = () => { userAnswers[currentQuestionIndex] = key; renderQuestion(); };
+                optionBox.className = `p-4 rounded-xl border-2 cursor-pointer transition-all flex items-center gap-3 ${
+                    isSelected ? 'bg-blue-50 border-blue-600 text-blue-900 font-semibold' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                }`;
+                optionBox.innerHTML = `
+                    <div class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm ${isSelected ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500'}">${key}</div>
+                    <div class="flex-1 text-sm md:text-base">${q.options[key]}</div>
+                `;
+                container.appendChild(optionBox);
+            });
+
+            document.getElementById('btn-prev').disabled = currentQuestionIndex === 0;
+            const doubtBtn = document.getElementById('btn-doubt');
+            doubtBtn.className = doubtfulAnswers[currentQuestionIndex] 
+                ? "px-5 py-2.5 bg-amber-400 border border-amber-500 text-white font-semibold rounded-xl transition flex items-center gap-2 cursor-pointer"
+                : "px-5 py-2.5 bg-amber-50 border border-amber-300 text-amber-700 font-semibold rounded-xl hover:bg-amber-100 transition flex items-center gap-2 cursor-pointer";
+
+            initNavGrid();
+            loadEditorData(); // Muat data soal ke panel Editor di sebelah kanan
+            saveCurrentState();
+        }
+
+        // ----------------------------------------------------
+        // ENGINE LIVE EDITOR TAMBAHAN (MENGUBAH DATA LIVE)
+        // ----------------------------------------------------
+        function loadEditorData() {
+            const q = questions[currentQuestionIndex];
+            document.getElementById('editor-num-info').innerText = `(#${currentQuestionIndex + 1})`;
+            document.getElementById('edit-question-text').value = q.text;
+            
+            // Masukkan data teks jawaban ke input editor
+            document.getElementById('edit-opt-A').value = q.options.A || '';
+            document.getElementById('edit-opt-B').value = q.options.B || '';
+            document.getElementById('edit-opt-C').value = q.options.C || '';
+            document.getElementById('edit-opt-D').value = q.options.D || '';
+            
+            // Tandai radio button sesuai kunci jawaban saat ini
+            const radios = document.getElementsByName('edit-correct-key');
+            radios.forEach(radio => {
+                radio.checked = (radio.value === q.correctAnswer);
+            });
+        }
+
+        function updateLiveQuestionData() {
+            const q = questions[currentQuestionIndex];
+            
+            // Update teks pertanyaan
+            q.text = document.getElementById('edit-question-text').value;
+            
+            // Update teks pilihan jawaban
+            q.options.A = document.getElementById('edit-opt-A').value;
+            q.options.B = document.getElementById('edit-opt-B').value;
+            q.options.C = document.getElementById('edit-opt-C').value;
+            q.options.D = document.getElementById('edit-opt-D').value;
+            
+            // Update kunci jawaban dari radio button yang terpilih
+            const selectedRadio = document.querySelector('input[name="edit-correct-key"]:checked');
+            if (selectedRadio) {
+                q.correctAnswer = selectedRadio.value;
+            }
+            
+            // Segarkan visual workspace soal kiri secara dinamis tanpa berpindah halaman
+            document.getElementById('question-text').innerHTML = q.text;
+            
+            const container = document.getElementById('options-container');
+            const childs = container.children;
+            if(childs.length === 4) {
+                childs[0].querySelector('.flex-1').innerText = q.options.A;
+                childs[1].querySelector('.flex-1').innerText = q.options.B;
+                childs[2].querySelector('.flex-1').innerText = q.options.C;
+                childs[3].querySelector('.flex-1').innerText = q.options.D;
+            }
+            saveCurrentState();
+        }
+
+        function toggleDoubtful() {
+            if (doubtfulAnswers[currentQuestionIndex]) { delete doubtfulAnswers[currentQuestionIndex]; } 
+            else { doubtfulAnswers[currentQuestionIndex] = true; }
+            renderQuestion();
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < questions.length - 1) { currentQuestionIndex++; renderQuestion(); }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) { currentQuestionIndex--; renderQuestion(); }
+        }
+
+        // ----------------------------------------------------
+        // SISTEM TIMING DAN SECURITY ENGINE (HANYA KLIK KANAN)
+        // ----------------------------------------------------
+        function startTimer() {
+            clearInterval(timerInterval);
+            const timerContainer = document.getElementById('timer-container');
+            const timerIcon = document.getElementById('timer-icon');
+            const timerDisplay = document.getElementById('timer');
+
+            timerInterval = setInterval(() => {
+                remainingTime--;
+                let mins = Math.floor(remainingTime / 60);
+                let secs = remainingTime % 60;
+                timerDisplay.innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+                if (remainingTime <= 10 * 60) {
+                    timerContainer.className = "flex items-center gap-3 bg-red-50 px-5 py-2.5 rounded-xl border border-red-300 animate-pulse text-red-600";
+                    timerIcon.className = "fa-solid fa-triangle-exclamation text-xl text-red-500";
+                }
+                if (remainingTime <= 0) { clearInterval(timerInterval); endExam(); }
+            }, 1000);
+        }
+
+        function initSecurityListeners() {
+            document.addEventListener('contextmenu', (e) => e.preventDefault());
+        }
+
+        // ----------------------------------------------------
+        // SKORING AKHIR DAN RINGKASAN HASIL
+        // ----------------------------------------------------
+        function confirmEndExam() {
+            let totalAnswered = Object.keys(userAnswers).length;
+            if (confirm(`Selesai ujian?\nDijawab: ${totalAnswered}\nSisa: ${questions.length - totalAnswered}`)) { endExam(); }
+        }
+
+        function endExam() {
+            clearInterval(timerInterval);
+            let correctCount = 0, wrongCount = 0, emptyCount = 0;
+
+            questions.forEach((q, idx) => {
+                const ans = userAnswers[idx];
+                if (!ans) emptyCount++;
+                else if (ans === q.correctAnswer) correctCount++;
+                else wrongCount++;
+            });
+
+            let score = ((correctCount / questions.length) * 100).toFixed(1);
+            localStorage.removeItem(STORAGE_KEY_STATE);
+
+            examPage.classList.add('hidden');
+            resultPage.classList.remove('hidden');
+
+            document.getElementById('res-nama').innerText = document.getElementById('username').value;
+            document.getElementById('res-tanggal').innerText = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+            
+            let usedTime = (90 * 60) - remainingTime;
+            document.getElementById('res-durasi').innerText = `${Math.floor(usedTime / 60)} menit ${usedTime % 60} detik`;
+            document.getElementById('res-nilai').innerText = score;
+            document.getElementById('res-benar').innerText = correctCount;
+            document.getElementById('res-salah').innerText = wrongCount;
+            document.getElementById('res-kosong').innerText = emptyCount;
+
+            renderReviewSection();
+        }
+
+        function renderReviewSection() {
+            const container = document.getElementById('review-container');
+            container.innerHTML = '';
+
+            questions.forEach((q, idx) => {
+                const uAns = userAnswers[idx];
+                const cAns = q.correctAnswer;
+                const isCorrect = uAns === cAns;
+
+                const box = document.createElement('div');
+                box.className = `p-5 rounded-2xl border-2 ${isCorrect ? 'bg-green-50/50 border-green-200' : 'bg-red-50/50 border-red-200'}`;
+
+                let optionsHtml = '';
+                Object.keys(q.options).forEach((k) => {
+                    let isKeyCorrect = k === cAns;
+                    let isKeyUser = k === uAns;
+                    
+                    // Jawaban benar dicetak tebal/bold (font-bold)
+                    let textStyle = isKeyCorrect ? 'text-green-700 font-bold' : (isKeyUser ? 'text-red-700 line-through' : 'text-slate-600');
+                    optionsHtml += `
+                        <div class="text-sm py-1 border-b border-slate-100 flex items-start gap-2 ${textStyle}">
+                            <strong>${k}.</strong> <span>${isKeyCorrect ? '<strong>' + q.options[k] + '</strong>' : q.options[k]}</span>
+                            ${isKeyCorrect ? '<span class="text-xs bg-green-200 text-green-800 px-1.5 py-0.5 rounded font-bold">Kunci</span>':''}
+                            ${isKeyUser && !isCorrect ? '<span class="text-xs bg-red-200 text-red-800 px-1.5 py-0.5 rounded font-bold">Pilihan Anda</span>':''}
+                        </div>`;
+                });
+
+                box.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-bold bg-slate-200 px-2.5 py-1 rounded">SOAL ${idx + 1}</span>
+                        <span class="text-xs font-bold ${isCorrect ? 'text-green-600':'text-red-600'}">${isCorrect ? 'BENAR':'SALAH / KOSONG'}</span>
+                    </div>
+                    <p class="text-slate-800 font-medium mb-3">${q.text}</p>
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 space-y-2">${optionsHtml}</div>`;
+                container.appendChild(box);
+            });
+        }
+
+        function downloadJsonReport() {
+            const dataReport = {
+                nama: document.getElementById('res-nama').innerText,
+                skor: document.getElementById('res-nilai').innerText,
+                waktu: document.getElementById('res-durasi').innerText
+            };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataReport, null, 2));
+            const a = document.createElement('a');
+            a.setAttribute("href", dataStr);
+            a.setAttribute("download", `Hasil_CAT_${dataReport.nama}.json`);
+            a.click();
+        }
+
+        function restartApp() { window.location.reload(); }
+    </script>
+
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            #printable-area { border: none !important; box-shadow: none !important; width: 100% !important; }
+        }
+    </style>
+</body>
+</html>
